@@ -1,0 +1,7 @@
+sample cert and key generated with syncthing binary
+
+syncthing v2.0.13 "Hafnium Hornet" (go1.25.5 windows-amd64) builder@github.syncthing.net 2025-12-23 08:10:48 UTC
+
+syncthing generate
+2026-01-10 08:41:01 INF Generating key and certificate (cn=syncthing log.pkg=syncthing)
+2026-01-10 08:41:01 INF Calculated device ID (device=MDP7CHA-CS42EZG-JCHVCNY-DPKWIRN-GOUR2IG-NY7MXAL-Q346ZE5-WLCGPAC log.pkg=github)
