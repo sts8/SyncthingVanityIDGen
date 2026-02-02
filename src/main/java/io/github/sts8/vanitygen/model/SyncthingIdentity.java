@@ -19,6 +19,13 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
+/**
+ * Represents a Syncthing device identity, consisting of a public/private key pair,
+ * an X.509 certificate, and a unique Syncthing Device ID.
+ * <p>
+ * This class handles the derivation of the Device ID from the certificate
+ * and provides functionality to export the identity to PEM files.
+ */
 public class SyncthingIdentity {
 
     private static final String HASHING_ALGORITHM = "SHA-256";
@@ -27,6 +34,16 @@ public class SyncthingIdentity {
     private final X509Certificate certificate;
     private final String syncthingID;
 
+    /**
+     * Creates a new Syncthing identity from a provided key pair.
+     * The X.509 certificate is generated automatically using the {@link SyncthingCertificateFactory}.
+     *
+     * @param keyPair the {@link KeyPair} to use for this identity
+     * @throws CertificateException      if certificate generation fails
+     * @throws OperatorCreationException if the certificate signer cannot be created
+     * @throws IOException               if an I/O error occurs during processing
+     * @throws NoSuchAlgorithmException  if the SHA-256 algorithm is not available
+     */
     public SyncthingIdentity(KeyPair keyPair)
             throws CertificateException, OperatorCreationException, IOException, NoSuchAlgorithmException {
 
@@ -35,6 +52,14 @@ public class SyncthingIdentity {
         this.syncthingID = computeSyncthingID();
     }
 
+    /**
+     * Creates a Syncthing identity from an existing certificate and private key.
+     *
+     * @param certificate the existing {@link X509Certificate}
+     * @param privateKey  the corresponding {@link PrivateKey}
+     * @throws CertificateEncodingException if the certificate cannot be encoded for ID calculation
+     * @throws NoSuchAlgorithmException     if the SHA-256 algorithm is not available
+     */
     public SyncthingIdentity(X509Certificate certificate, PrivateKey privateKey)
             throws CertificateEncodingException, NoSuchAlgorithmException {
 
@@ -43,7 +68,13 @@ public class SyncthingIdentity {
         this.syncthingID = computeSyncthingID();
     }
 
-    // https://github.com/syncthing/syncthing-java/blob/master/core/src/main/kotlin/net/syncthing/java/core/beans/DeviceId.kt
+    /**
+     * Generates a Luhn-32 checksum character for a given string based on the Syncthing/Base32 alphabet.
+     *
+     * @param string the input string to calculate the checksum for
+     * @return the calculated checksum character
+     * @see <a href="https://github.com/syncthing/syncthing-java/blob/master/core/src/main/kotlin/net/syncthing/java/core/beans/DeviceId.kt">Syncthing DeviceId Reference</a>
+     */
     private static char generateLuhn32Checksum(String string) {
         String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
         int n = alphabet.length();
@@ -64,10 +95,26 @@ public class SyncthingIdentity {
         return alphabet.charAt(check);
     }
 
+    /**
+     * Returns the formatted Syncthing Device ID.
+     * <p>
+     * The ID is a 63-character string consisting of 8 blocks of 7 characters
+     * each (total 56 alphanumeric characters), separated by hyphens.
+     *
+     * @return the formatted ID (e.g., ABCDEFG-HIJKLMN-PQRSTUV-WXYZ234-...)
+     */
     public String getSyncthingID() {
         return syncthingID;
     }
 
+    /**
+     * Computes the Syncthing Device ID by hashing the certificate, encoding to Base32,
+     * adding Luhn-32 checksums, and formatting into blocks.
+     *
+     * @return the computed ID string
+     * @throws NoSuchAlgorithmException     if SHA-256 is unavailable
+     * @throws CertificateEncodingException if the certificate data cannot be retrieved
+     */
     private String computeSyncthingID() throws NoSuchAlgorithmException, CertificateEncodingException {
 
         MessageDigest digest = MessageDigest.getInstance(HASHING_ALGORITHM);
@@ -94,6 +141,14 @@ public class SyncthingIdentity {
         );
     }
 
+    /**
+     * Writes the identity (certificate and private key) to a directory named after the Device ID.
+     * Creates two files: {@code cert.pem} and {@code key.pem}.
+     *
+     * @param parentDir the directory where the identity folder should be created
+     * @throws IOException                  if writing the files fails
+     * @throws CertificateEncodingException if the certificate data cannot be encoded
+     */
     public void writeToDirectory(Path parentDir)
             throws IOException, CertificateEncodingException {
 

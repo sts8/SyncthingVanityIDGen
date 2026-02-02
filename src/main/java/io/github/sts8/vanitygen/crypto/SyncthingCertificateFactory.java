@@ -30,6 +30,20 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 
+/**
+ * Factory for creating X.509 certificates compatible with Syncthing's security model.
+ * <p>
+ * This factory configures self-signed certificates with the specific extensions
+ * and metadata required by Syncthing, including:
+ * <ul>
+ * <li>20-year validity period</li>
+ * <li>Subject/Issuer: CN=syncthing, O=Syncthing, OU=Automatically Generated</li>
+ * <li>Subject Alternative Name: DNS:syncthing</li>
+ * <li>Key Usages: Digital Signature, Key Encipherment</li>
+ * <li>Extended Key Usages: Server Auth, Client Auth</li>
+ * </ul>
+ * * It uses Bouncy Castle as the underlying provider to support Ed25519 signatures.
+ */
 public final class SyncthingCertificateFactory {
 
     private static final String BOUNCY_CASTLE = "BC";
@@ -57,6 +71,15 @@ public final class SyncthingCertificateFactory {
         // utility class
     }
 
+    /**
+     * Generates a self-signed X.509 certificate for the given key pair.
+     *
+     * @param keyPair the {@link KeyPair} to sign and include in the certificate
+     * @return a fully constructed {@link X509Certificate}
+     * @throws CertificateException      if the certificate cannot be created or converted
+     * @throws IOException               if extension encoding fails
+     * @throws OperatorCreationException if the Ed25519 signer cannot be initialized
+     */
     public static X509Certificate create(KeyPair keyPair)
             throws CertificateException, IOException, OperatorCreationException {
 
