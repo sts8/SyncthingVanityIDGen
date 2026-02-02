@@ -33,11 +33,6 @@ public class PrefixTrie {
 
     private final Node root = new Node();
 
-    private static class Node {
-        private final Node[] children = new Node[ALPHABET_SIZE];
-        private boolean terminal = false;
-    }
-
     /**
      * Inserts a prefix into the Trie.
      * Hyphens are treated as literal characters.
@@ -85,5 +80,10 @@ public class PrefixTrie {
 
     private int getIndex(char c) {
         return (c < 128) ? INDEX_MAP[c] : -1;
+    }
+
+    private static class Node {
+        private final Node[] children = new Node[ALPHABET_SIZE];
+        private boolean terminal = false;
     }
 }

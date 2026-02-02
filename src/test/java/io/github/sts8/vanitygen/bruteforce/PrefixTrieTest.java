@@ -8,10 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PrefixTrieTest {
 
-    private PrefixTrie trie;
-
     private static final String SYNCTHING_ID_1 = "7777777-7777777-7777777-7777777-7777777-7777777-7777777-7777777";
     private static final String SYNCTHING_ID_2 = "AAAAAAA-AAAAAAA-AAAAAAA-AAAAAAA-AAAAAAA-AAAAAAA-AAAAAAA-AAAAAAA";
+
+    private PrefixTrie trie;
 
     @BeforeEach
     void setUp() {
