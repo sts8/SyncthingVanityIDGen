@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Orchestrates the multithreaded brute-force search for Syncthing Device IDs
- * that match a specific vanity prefix.
+ * that match any of the vanity prefixes stored in a {@link PrefixTrie}.
  * <p>
  * The engine manages a pool of worker threads and a scheduled reporter thread
  * for performance monitoring. It also registers a shutdown hook to ensure
@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class BruteForceEngine {
 
-    private final String prefix;
+    private final PrefixTrie trie;
     private final int threads;
     private final Path outputDir;
 
@@ -33,12 +33,12 @@ public final class BruteForceEngine {
     /**
      * Constructs the engine with search parameters.
      *
-     * @param prefix    The desired starting characters of the Syncthing ID.
+     * @param trie      The Trie containing all target vanity prefixes.
      * @param threads   The number of concurrent worker threads to spawn.
      * @param outputDir The filesystem path where matching identities will be saved.
      */
-    public BruteForceEngine(String prefix, int threads, Path outputDir) {
-        this.prefix = prefix;
+    public BruteForceEngine(PrefixTrie trie, int threads, Path outputDir) {
+        this.trie = trie;
         this.threads = threads;
         this.outputDir = outputDir;
     }
@@ -74,7 +74,7 @@ public final class BruteForceEngine {
      * The core logic for an individual worker thread.
      * <p>
      * Continuously generates new key pairs, derives the Syncthing ID, and
-     * checks if it matches the target prefix. If a match is found, the
+     * checks if it matches any prefix in the Trie. If a match is found, the
      * identity is written to the output directory.
      */
     private void workerLoop() {
@@ -84,10 +84,11 @@ public final class BruteForceEngine {
             while (!Thread.currentThread().isInterrupted()) {
                 KeyPair keyPair = generator.generate();
                 SyncthingIdentity identity = new SyncthingIdentity(keyPair);
+                String id = identity.getSyncthingID();
 
                 totalIterations.incrementAndGet();
 
-                if (identity.getSyncthingID().startsWith(prefix)) {
+                if (trie.matches(id)) {
                     System.out.println(identity.getSyncthingID());
                     identity.writeToDirectory(outputDir);
                 }

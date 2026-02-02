@@ -28,6 +28,8 @@ import java.security.cert.X509Certificate;
  */
 public class SyncthingIdentity {
 
+    public static final String SYNCTHING_ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
     private static final String HASHING_ALGORITHM = "SHA-256";
 
     private final KeyPair keyPair;
@@ -76,14 +78,13 @@ public class SyncthingIdentity {
      * @see <a href="https://github.com/syncthing/syncthing-java/blob/master/core/src/main/kotlin/net/syncthing/java/core/beans/DeviceId.kt">Syncthing DeviceId Reference</a>
      */
     private static char generateLuhn32Checksum(String string) {
-        String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-        int n = alphabet.length();
+        int n = SYNCTHING_ID_ALPHABET.length();
 
         int factor = 1;
         int sum = 0;
 
         for (char c : string.toCharArray()) {
-            int index = alphabet.indexOf(c);
+            int index = SYNCTHING_ID_ALPHABET.indexOf(c);
             var add = factor * index;
             factor = factor == 2 ? 1 : 2;
             add = add / n + add % n;
@@ -92,7 +93,7 @@ public class SyncthingIdentity {
 
         int remainder = sum % n;
         int check = (n - remainder) % n;
-        return alphabet.charAt(check);
+        return SYNCTHING_ID_ALPHABET.charAt(check);
     }
 
     /**
