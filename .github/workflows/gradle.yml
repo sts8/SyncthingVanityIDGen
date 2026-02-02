@@ -1,7 +1,10 @@
-name: Build Binaries and JAR
+name: Build and Release
 
 on:
   workflow_dispatch:  # Manual trigger
+  push:
+    tags:
+      - '**' # Matches any tag pushed
 
 jobs:
   build:
@@ -9,6 +12,8 @@ jobs:
       matrix:
         os: [ windows-latest, ubuntu-latest ]
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
@@ -25,11 +30,8 @@ jobs:
         if: runner.os == 'Linux'
         run: chmod +x gradlew
 
-      - name: Run Tests
-        run: ./gradlew test
-
-      - name: Build Native Binary
-        run: ./gradlew packageBinary
+      - name: Build with Gradle
+        run: ./gradlew test packageBinary
 
       - name: Package Windows Binary
         if: matrix.os == 'windows-latest'
@@ -40,11 +42,14 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: tar -czvf vanitygen-linux-x64.tar.gz -C build/native vanitygen
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v6
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
         with:
-          name: vanitygen-${{ matrix.os }}
-          path: |
+          files: |
             vanitygen-windows-x64.zip
             vanitygen-linux-x64.tar.gz
             build/libs/*.jar
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
