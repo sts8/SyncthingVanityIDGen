@@ -1,3 +1,5 @@
+import org.gradle.internal.os.OperatingSystem
+
 plugins {
     id("java")
     id("application")
@@ -62,5 +64,41 @@ tasks.jacocoTestReport {
     reports {
         html.required.set(true)
         html.outputLocation.set(layout.buildDirectory.dir("jacocoHtml"))
+    }
+}
+
+tasks.register<Exec>("packageBinary") {
+    group = "distribution"
+    description = "Packages the application as a native binary using jpackage (Java 25)."
+
+    // Ensure the JAR is built first
+    dependsOn("jar")
+
+    val outputDir = layout.buildDirectory.dir("native")
+    val inputDir = layout.buildDirectory.dir("libs")
+    val jarName = "${project.name}-${project.version}.jar"
+
+    // Clean up old builds before running
+    doFirst {
+        delete(outputDir)
+    }
+
+    // Direct call to the JDK 25 jpackage tool
+    executable = "jpackage"
+
+    args(
+        "--name", "vanitygen",
+        "--input", inputDir.get().asFile.absolutePath,
+        "--main-jar", jarName,
+        "--main-class", application.mainClass.get(),
+        "--dest", outputDir.get().asFile.absolutePath,
+        "--type", "app-image",
+        "--add-modules", "java.base,java.naming,java.sql",
+        "--jlink-options", "--strip-debug --compress zip-9 --no-header-files --no-man-pages",
+        "--java-options", "-XX:+UseParallelGC -Xms2G -Xmx2G -XX:+UseCompactObjectHeaders"
+    )
+
+    if (OperatingSystem.current().isWindows) {
+        args("--win-console")
     }
 }

@@ -1,11 +1,14 @@
-name: Java CI with Gradle
+name: Build Binaries and JAR
 
 on:
   workflow_dispatch:  # Manual trigger
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ windows-latest, ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
@@ -18,11 +21,30 @@ jobs:
           java-version: 25
           cache: gradle
 
-      - name: Build JAR
-        run: ./gradlew clean jar
+      - name: Grant execute permission for gradlew
+        if: runner.os == 'Linux'
+        run: chmod +x gradlew
 
-      - name: Upload JAR Artifact
+      - name: Run Tests
+        run: ./gradlew test
+
+      - name: Build Native Binary
+        run: ./gradlew packageBinary
+
+      - name: Package Windows Binary
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: Compress-Archive -Path build/native/vanitygen -DestinationPath vanitygen-windows-x64.zip
+
+      - name: Package Linux Binary
+        if: matrix.os == 'ubuntu-latest'
+        run: tar -czvf vanitygen-linux-x64.tar.gz -C build/native vanitygen
+
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: vanitygen-jar
-          path: build/libs/*.jar
+          name: vanitygen-${{ matrix.os }}
+          path: |
+            vanitygen-windows-x64.zip
+            vanitygen-linux-x64.tar.gz
+            build/libs/*.jar
